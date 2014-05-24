@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Dictionary Maker</title>
+        <link href="css/bootstrap.min.css" rel="stylesheet" media="screen">
+    </head>
+    <body>
+
+        <div>
+            <h1>Dictionary Maker</h1>
+            <input type="text" id="inputVal"/><br>
+            <input type="checkbox" id="recognitionCheckbox">Auto recognition<br><br><br>
+            <select id="lang">
+              <option value="en">en</option>
+              <option value="de">de</option>
+              <option value="fr">fr</option>
+              <option value="es">es</option>
+            </select>
+            <button id="btn1">Generate</button>
+        </div>
+        <div id="other"></div>
+        <div id="resultDiv"></div>
+        <script src="js/jquery-2.1.0.min.js"></script>
+        <script src="js/bootstrap.min.js"></script>
+        <script>
+
+
+            function generateHTMLDictionaryView(data) {
+                var output = "";
+                for (var i=0, len = data.length; i< len; i++) {
+                    output += "<p><strong>" + data[i].original + "</strong>:   " + data[i].translated + "</p>";
+                }
+                return output;
+            }
+            function generateDictionary(value, callback) {
+
+                $.ajax({
+                    url: "http://127.0.0.1:1337/" + value + "?lang=" + $("#lang").val(),
+                    type: "GET",
+                    datatype: "jsonp",
+                   // cache: false,
+                    success: function(data) {
+                        if (data === "0" || data[0] === undefined) {
+                            $("#resultDiv").html("No such page on target wikipedia");
+                        } else {
+                            $("#resultDiv").html(generateHTMLDictionaryView(data));
+                        }
+                        
+                        callback();   
+                    },
+                    error: function (xhr, status, err) {
+                        $("#resultDiv").html("An error ocurred");
+                        callback();
+                    }
+                });
+            };
+
+            function getNouns(value, callback) {
+                $("#other").html("");
+
+                $.ajax({
+                    url: "http://127.0.0.1:1336/" + value,
+                    type: "GET",
+                    datatype: "jsonp",
+                   // cache: false,
+                    success: function(data) {
+
+                     //   generateDictionary(data[0], function(){
+                            $("#btn1").removeAttr("disabled");        
+                      //      });
+                        var flush = "";
+                        data.forEach(function(entity) {
+                            flush +='<button class="proposition">' + entity + '</button>';
+                            other
+                        }); 
+                        $("#other").html(flush);
+
+                        $(".proposition").click(function (oEvent) {
+                            $(".proposition").removeAttr("disabled");
+                            generateDictionary(oEvent.currentTarget.innerText, function() {});
+                            $(this).attr("disabled", "disabled");
+                        })
+                    },
+                    error: function (xhr, status, err) {
+                        $("#resultDiv").html("An error ocurred");
+                        callback();
+                    }
+                });
+            };
+
+
+            $(document).ready(function() {
+                $("#btn1").click(function() {
+                    if ($("#inputVal").prop("value") !== "") {
+                        //
+                        $("#resultDiv").html("Loading...");
+                        $("#btn1").attr("disabled", "disabled");
+                        if ( $("#recognitionCheckbox").prop('checked')) {
+
+                            getNouns($("#inputVal").prop("value"), function(){
+                                $("#btn1").removeAttr("disabled");        
+                            });
+
+
+                        } else {
+
+                            generateDictionary($("#inputVal").prop("value"), function(){
+                                $("#btn1").removeAttr("disabled");        
+                            });
+
+
+                        }
+
+
+                    } else {
+                        $("#resultDiv").html('No value to search. Please fill in the text input and press "Generate" button')
+                    }
+                });
+            });
+
+
+        </script>
+    </body>
+</html>
